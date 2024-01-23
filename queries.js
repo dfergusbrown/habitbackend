@@ -17,13 +17,13 @@ exports.getUsers = (req, res) => {
 };
 
 exports.getUserByUsername = (req, res) => {
-
-    pool.query('SELECT * FROM users WHERE username = $1', [username], (error, results) => {
-        if (error) {
-            throw error
-        }
-        res.status(200).json(results.rows)
-    })
+    const {username} = req.body;
+    pool.query('SELECT * FROM users WHERE username = $1',[username], function (err, user) {
+        if (err) return done(err);
+        if (!user) return done(null, false, /*optional message*/);
+        if (user.password != password) return done(null, false, { message: 'Incorrect username or password.' });
+        return done(null, user);
+    });
 };
 
 exports.checkDBforEmail = (req, res, next) => {

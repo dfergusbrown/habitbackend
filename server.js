@@ -5,8 +5,14 @@ const PORT = 3000;
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
+
+// authentication
 const db = require('./queries');
 const userRouter = require("./routes/userRouter");
+const passport = require('passport');
+const bcrypt = require('bcrypt')
+
+
 
 const habitList = [
   "Drink Water",
@@ -28,7 +34,7 @@ app.use(logger('dev'))
 app.get('/', (req, res) => {
   res.json({ info: 'Node.js, Express, and Postgres API' })
 })
-
+app.use(passport.initialize());
 app.use('/users', userRouter)
 
 app.get("/habits", (req, res, next) => {
