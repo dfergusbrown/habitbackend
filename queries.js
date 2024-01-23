@@ -7,19 +7,18 @@ const pool = new Pool({
     port: 5432,
 });
 
-const getUsers = (req, res) => {
+exports.getUsers = (req, res) => {
     pool.query('SELECT * FROM users ORDER BY id ASC', (error, results) => {
       if (error) {
         throw error
       }
       res.status(200).json(results.rows)
     })
-}
+};
 
-const getUserById = (req, res) => {
-    const id = parseInt(req.params.id)
+exports.getUserByUsername = (req, res) => {
 
-    pool.query('SELECT * FROM users WHERE id = $1', [id], (error, results) => {
+    pool.query('SELECT * FROM users WHERE username = $1', [username], (error, results) => {
         if (error) {
             throw error
         }
@@ -27,7 +26,7 @@ const getUserById = (req, res) => {
     })
 };
 
-const checkDBforEmail = (req, res, next) => {
+exports.checkDBforEmail = (req, res, next) => {
     const { email } = req.body
     console.log(`checking for email: ${email} in database`)
     pool.query('SELECT * from users WHERE email = $1', [email], (error, results) => {
@@ -41,7 +40,21 @@ const checkDBforEmail = (req, res, next) => {
     })
 }
 
-const createUser = (req, res) => {
+exports.checkDBforUsername = (req, res, next) => {
+    const { username } = req.body
+    console.log(`checking for username: ${username} in database`)
+    pool.query('SELECT * from users WHERE username = $1', [username], (error, results) => {
+        console.log(results.rows)
+        // found one!
+        if (results.rows.length > 0) {
+            return res.status(409).send('Username belongs to an existing account')
+        } 
+        // no such username is found
+        return next()
+    })
+};
+
+exports.createUser = (req, res) => {
     const { email, username, password } = req.body
     pool.query('INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *', [username, email, password], (error, results) => {
         if (error) {
@@ -49,9 +62,9 @@ const createUser = (req, res) => {
         }
         res.status(201).send(`User added with ID; ${results.rows[0].id}`)
     })
-}
+};
 
-const updateUser = (req, res) => {
+exports.updateUser = (req, res) => {
     const id = parseInt(req.params.id)
     const { name, email } = req.body
 
@@ -63,9 +76,9 @@ const updateUser = (req, res) => {
             res.status(200).send(`User modified with ID: ${id}`)
         }
     )
-}
+};
 
-const deleteUser = (req, res) => {
+exports.deleteUser = (req, res) => {
     const id = parseInt(req.params.id)
   
     pool.query('DELETE FROM users WHERE id = $1', [id], (error, results) => {
@@ -74,13 +87,4 @@ const deleteUser = (req, res) => {
       }
       response.status(200).send(`User deleted with ID: ${id}`)
     })
-  }
-
-module.exports = {
-    getUsers,
-    getUserById,
-    checkDBforEmail,
-    createUser,
-    updateUser,
-    deleteUser
-}
+  };
